@@ -5,10 +5,15 @@
     <div class="middle">
       <el-row :gutter="5" style="margin-bottom:20px;">
         <el-col :span="6">
-          <div style="text-align:center;">手机号：</div>
+          <div style="text-align:center;">手机：</div>
         </el-col>
         <el-col :span="18">
-          <el-input v-model="name" placeholder="请输入手机号" size="mini"></el-input>
+          <el-input
+            v-model="name"
+            placeholder="请输入手机号"
+            size="mini"
+            @keyup.enter.native="startRegister"
+          ></el-input>
         </el-col>
       </el-row>
       <el-row :gutter="5">
@@ -16,7 +21,13 @@
           <div style="text-align:center;">密码：</div>
         </el-col>
         <el-col :span="18">
-          <el-input v-model="pwd" placeholder="请输入密码" size="mini"></el-input>
+          <el-input
+            v-model="pwd"
+            type="password"
+            placeholder="请输入密码"
+            size="mini"
+            @keyup.enter.native="startRegister"
+          ></el-input>
         </el-col>
       </el-row>
       <div class="button">
@@ -25,6 +36,7 @@
           round
           size="mini"
           style="width:100%;box-shadow:0 0 20px rgba(0,0,0,.4);"
+          @click="startRegister"
         >注册</el-button>
       </div>
     </div>
@@ -37,6 +49,8 @@
 </template>
 
 <script>
+import crypto from "crypto-js";
+import { setTimeout } from "timers";
 export default {
   name: "register",
   data() {
@@ -50,6 +64,69 @@ export default {
   methods: {
     goLogin() {
       this.$router.replace({ path: "/login" });
+    },
+    startRegister() {
+      this.$throttle(this.reqRegister, 1000);
+    },
+    reqRegister() {
+      if (!this.name) {
+        this.$message.closeAll();
+        this.$message({
+          type: "warning",
+          center: true,
+          message: "请输入手机号"
+        });
+        return;
+      } else if (!this.$legalPhone(this.name)) {
+        this.$message.closeAll();
+        this.$message({
+          type: "warning",
+          center: true,
+          message: "请输入正确的手机号"
+        });
+        return;
+      }
+
+      if (!this.pwd) {
+        this.$message.closeAll();
+        this.$message({
+          type: "warning",
+          center: true,
+          message: "请输入密码"
+        });
+        return;
+      } else if (this.pwd.length < 6) {
+        this.$message.closeAll();
+        this.$message({
+          type: "warning",
+          center: true,
+          message: "请输入大于6位的密码"
+        });
+        return;
+      }
+
+      this.$http({
+        headers: "application/json; charset=utf-8",
+        url: this.$api.system.register,
+        data: {
+          username: this.name,
+          password: crypto.MD5(this.pwd).toString()
+        },
+        success: function(res) {
+          this.$message({
+            message: "注册成功!",
+            showClose: true,
+            center: true,
+            type: "success"
+          });
+          setTimeout(() => {
+            this.$router.replace({
+              name: "login",
+              params: { name: this.name }
+            });
+          }, 2000);
+        }.bind(this)
+      });
     }
   },
   computed: {},

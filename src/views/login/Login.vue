@@ -5,10 +5,15 @@
     <div class="middle">
       <el-row :gutter="5" style="margin-bottom:20px;">
         <el-col :span="6">
-          <div style="text-align:center;">手机号：</div>
+          <div style="text-align:center;">手机：</div>
         </el-col>
         <el-col :span="18">
-          <el-input v-model="name" placeholder="请输入手机号" size="mini"></el-input>
+          <el-input
+            v-model="name"
+            placeholder="请输入手机号"
+            size="mini"
+            @keyup.enter.native="startLogin"
+          ></el-input>
         </el-col>
       </el-row>
       <el-row :gutter="5">
@@ -16,7 +21,13 @@
           <div style="text-align:center;">密码：</div>
         </el-col>
         <el-col :span="18">
-          <el-input v-model="pwd" placeholder="请输入密码" size="mini"></el-input>
+          <el-input
+            v-model="pwd"
+            type="password"
+            placeholder="请输入密码"
+            size="mini"
+            @keyup.enter.native="startLogin"
+          ></el-input>
         </el-col>
       </el-row>
       <div class="button">
@@ -25,7 +36,7 @@
           round
           size="mini"
           style="width:100%;box-shadow:0 0 20px rgba(0,0,0,.4);"
-          @click="goHome"
+          @click="startLogin"
         >登陆</el-button>
       </div>
     </div>
@@ -41,6 +52,8 @@
 </template>
 
 <script>
+import crypto from "crypto-js";
+
 export default {
   name: "login",
   data() {
@@ -54,22 +67,85 @@ export default {
   props: [],
   components: {},
   methods: {
+    startLogin() {
+      this.$throttle(this.goHome, 1000);
+    },
     goHome() {
-      if (this.isRemember) {
-        localStorage.setItem("username", this.name);
-      } else {
-        localStorage.removeItem("username");
+      //登陆成功，进入首页
+      if (!this.name) {
+        this.$message.closeAll();
+        this.$message({
+          type: "warning",
+          center: true,
+          message: "请输入手机号"
+        });
+        return;
+      } else if (!this.$legalPhone(this.name)) {
+        this.$message.closeAll();
+        this.$message({
+          type: "warning",
+          center: true,
+          message: "请输入正确的手机号"
+        });
+        return;
       }
-      this.$router.replace({ path: "/home" });
+
+      if (!this.pwd) {
+        this.$message.closeAll();
+        this.$message({
+          type: "warning",
+          center: true,
+          message: "请输入密码"
+        });
+        return;
+      } else if (this.pwd.length < 6) {
+        this.$message.closeAll();
+        this.$message({
+          type: "warning",
+          center: true,
+          message: "请输入大于6位的密码"
+        });
+        return;
+      }
+
+      this.$http({
+        headers: "application/json; charset=utf-8",
+        url: this.$api.system.login,
+        data: {
+          username: this.name,
+          password: crypto.MD5(this.pwd).toString()
+        },
+        success: function(res) {
+          if (this.isRemember) {
+            sessionStorage.setItem("username", this.name);
+          } else {
+            sessionStorage.removeItem("username");
+          }
+          sessionStorage.setItem("token", res.token);
+          this.$router.replace({ path: "/home" });
+        }.bind(this)
+      });
     },
     goRegister() {
       this.$router.replace({ path: "/register" });
+    },
+    rememberName() {
+      if (this.$route.params) {
+        this.name = this.$route.params.name;
+      } else if (sessionStorage.getItem("username")) {
+        this.name = sessionStorage.getItem("username");
+      }
     }
   },
   computed: {},
   beforeCreate() {},
   created() {},
-  beforeMount() {},
+  beforeMount() {
+    if (this.$route.params.name) {
+      this.name = this.$route.params.name;
+      this.pwd = this.$route.params.pwd;
+    }
+  },
   mounted() {
     let random = parseInt(Math.random() * 1000);
     if (random % 2) {
@@ -77,9 +153,7 @@ export default {
     } else {
       this.bg = require("../../assets/images/bg3.jpg");
     }
-    if (localStorage.getItem("username")) {
-      this.name = localStorage.getItem("username");
-    }
+    this.rememberName();
   },
   beforeUpdate() {},
   updated() {},

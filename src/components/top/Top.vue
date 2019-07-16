@@ -16,13 +16,14 @@
           </span>
         </div>
         <div class="person">
-          <span @click="goLogin" v-if="!isLogin">
+          <span @click="goLogin" v-if="!username" style="margin-right: 20px;">
             <i class="iconfont icon-denglu"></i> 登陆
           </span>
           <span v-else>
             <el-dropdown>
               <span class="el-dropdown-link">
-                <i class="iconfont icon-ai-user"></i> 个人中心
+                <i class="iconfont icon-ai-user"></i>
+                {{username}}
                 <i class="el-icon-arrow-down el-icon--right"></i>
               </span>
               <el-dropdown-menu slot="dropdown">
@@ -60,7 +61,7 @@ export default {
     return {
       curLang: "",
       searchVal: "",
-      isLogin: true
+      username: ""
     };
   },
   props: [],
@@ -80,7 +81,22 @@ export default {
     },
     outLogin() {
       //退出登录
-      this.$router.replace({ path: "/login" });
+      this.$confirm("您将退出登录, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
+        .then(() => {
+          this.$loginOut();
+        })
+        .catch(() => {});
+    },
+    updatePerson() {
+      if (sessionStorage.getItem("username")) {
+        this.username = sessionStorage.getItem("username");
+      } else {
+        this.username = "";
+      }
     }
   },
   computed: {},
@@ -91,13 +107,18 @@ export default {
       this.$i18n.locale === "zh"
         ? this.$t("basic.top.language1")
         : this.$t("basic.top.language2");
+    this.updatePerson();
   },
   mounted() {},
   beforeUpdate() {},
   updated() {},
   beforeDestroy() {},
   destroyed() {},
-  watch: {}
+  watch: {
+    "$route.path": function(to, form) {
+      this.updatePerson();
+    }
+  }
 };
 </script>
 <style scoped lang="scss">

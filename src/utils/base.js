@@ -12,23 +12,54 @@ export default {
    * @param {Object} Vue - Vue类
    * @param {Object} [pluginOptions] - 插件安装配置
    */
-  install: function(Vue, option) {
+  install: function (Vue, option) {
     //全局引入api，这样在任何组件中，都不需要再import，直接使用全局变量引用即可
     //比如：在Login.vue 中 使用登录接口
     // url:this.$api.模块名.接口名,
     Vue.prototype.$api = api;
 
-    // 这里不删除全部缓存，因为很可能下一次登录的账号是同一个，这时留下一些习惯缓存是很好的体验
-    // 但，如果下一次登录，和退出登录时，不是同一个账号，则做全部删除缓存处理，在login接口中操作
+
     // 子组件调用：this.$loginOut()
-    Vue.prototype.$loginOut = function(methodOptions) {
-      localStorage.removeItem("hasLogin");
-      localStorage.removeItem("userInfo");
+    Vue.prototype.$loginOut = function () {
+      sessionStorage.removeItem("token");
       this.$router.replace({ path: "/login" });
     };
 
+
+        // 防抖
+    Vue.prototype.$debounce = function(fn, delay) {
+      var delay = delay || 200;
+      var timer;
+      return function () {
+          var th = this;
+          var args = arguments;
+          if (timer) {
+              clearTimeout(timer);
+          }
+          timer = setTimeout(function () {
+              timer = null;
+              fn.apply(th, args);
+          }, delay);
+      };
+    }
+    // 节流
+    Vue.prototype._last = 0;
+    Vue.prototype.$throttle = function(fn, interval) {
+      var interval = interval || 200;
+      var th = this;
+      var args = arguments;
+      var now = +new Date();
+      if (now - this._last > interval) {
+          this._last = now;
+          fn.apply(th, args);
+          setTimeout(function(){
+            this._last = 0;
+          }.bind(this), interval)
+      }
+    }
+
     //设置cookie
-    Vue.prototype.$setCookie = function(name, value, expiredays) {
+    Vue.prototype.$setCookie = function (name, value, expiredays) {
       //调用示例：this.$setCookie('login','true',7);
       var exdate = new Date();
       exdate.setDate(exdate.getDate() + expiredays);
@@ -40,14 +71,14 @@ export default {
     };
 
     //获取cookie
-    (Vue.prototype.$getCookie = function(name) {
+    (Vue.prototype.$getCookie = function (name) {
       var arr,
         reg = new RegExp("(^| )" + name + "=([^;]*)(;|$)");
       if ((arr = document.cookie.match(reg))) return arr[2];
       else return null;
     }),
       //删除cookie
-      (Vue.prototype.$delCookie = function(name) {
+      (Vue.prototype.$delCookie = function (name) {
         var exp = new Date();
         exp.setTime(exp.getTime() - 1);
         var cval = getCookie(name);
@@ -59,7 +90,7 @@ export default {
 
     //限制只能输入数字
     // 建议优先使用指令：v-enterNumber
-    Vue.prototype.$number = function(value) {
+    Vue.prototype.$number = function (value) {
       if (/\D/.test(value)) {
         value = value.replace(/\D/g, "");
       }
@@ -67,7 +98,7 @@ export default {
     };
 
     //是否是合法的11位手机号码
-    Vue.prototype.$legalPhone = function(phone) {
+    Vue.prototype.$legalPhone = function (phone) {
       let bool = false;
       if (/^[1][3,4,5,7,8][0-9]{9}$/.test(phone)) {
         bool = true;
@@ -82,7 +113,7 @@ export default {
      * @param   key 根据数组对象的某个字段key来去重
      * @return
      */
-    Vue.prototype.$noRepeat = function(arr, key) {
+    Vue.prototype.$noRepeat = function (arr, key) {
       if (!(arr instanceof Array)) {
         return;
       }
@@ -106,28 +137,28 @@ export default {
     };
 
     //去除空格
-    Vue.prototype.$trim = function(str) {
+    Vue.prototype.$trim = function (str) {
       //去除字符串左右空格
       if (Object.prototype.toString.call(str) !== "[object String]") {
         return str;
       }
       return str.replace(/^\s*|\s*$/g, "");
     };
-    Vue.prototype.$trimAll = function(str) {
+    Vue.prototype.$trimAll = function (str) {
       //去除字符串全部空格
       if (Object.prototype.toString.call(str) !== "[object String]") {
         return str;
       }
       return str.replace(/\s*/g, "");
     };
-    Vue.prototype.$trimLeft = function(str) {
+    Vue.prototype.$trimLeft = function (str) {
       //去除字符串左侧空格
       if (Object.prototype.toString.call(str) !== "[object String]") {
         return str;
       }
       return str.replace(/^\s*/, "");
     };
-    Vue.prototype.$trimRight = function(str) {
+    Vue.prototype.$trimRight = function (str) {
       //去除字符串右侧空格
       if (Object.prototype.toString.call(str) !== "[object String]") {
         return str;
@@ -166,7 +197,7 @@ export default {
     };
 
     //添加时间戳转换
-    Vue.prototype.$formatTime = function(time) {
+    Vue.prototype.$formatTime = function (time) {
       let date = new Date(time);
       let y = date.getFullYear();
       let m = date.getMonth() + 1;
@@ -184,7 +215,7 @@ export default {
 
     //日期截取
     //例如：2019-01-29T16:00:00.000+0000 转换后为： 2019-01-29
-    Vue.prototype.$formatDate = function(time) {
+    Vue.prototype.$formatDate = function (time) {
       if (!time) {
         return "";
       }
@@ -200,7 +231,7 @@ export default {
     //4，随机字体是否倾斜；
     //
     //
-    Vue.prototype.$createVerifyCode = function() {
+    Vue.prototype.$createVerifyCode = function () {
       let nums_letter_arr = [
         "a",
         "b",
@@ -387,7 +418,7 @@ export default {
     //2，将键值对按照ASCII码升序排列；
     //
     //
-    Vue.prototype.$getStrSort = function(dataObj) {
+    Vue.prototype.$getStrSort = function (dataObj) {
       let keyarr = [];
       let newObj = "";
 
@@ -398,7 +429,7 @@ export default {
         return false;
       }
 
-      keyarr.sort(function(a, b) {
+      keyarr.sort(function (a, b) {
         return a.localeCompare(b);
       });
 
@@ -420,11 +451,11 @@ export default {
      * type:获取最大值或者最小值,‘min’:获取数组中最小值，'max':获取数组中最大值
      *
      */
-    Vue.prototype.$getMaxOrMin = function(arr, type) {
+    Vue.prototype.$getMaxOrMin = function (arr, type) {
       if (Object.prototype.toString.call(arr) !== "[object Array]") {
         return;
       }
-      arr.sort(function(a, b) {
+      arr.sort(function (a, b) {
         return a - b;
       });
 
@@ -441,7 +472,7 @@ export default {
      * date1/date2:日期格式  非时间戳
      * 返回 date1是否大于date2
      */
-    Vue.prototype.$compareDate = function(date1, date2) {
+    Vue.prototype.$compareDate = function (date1, date2) {
       if (!date1 && !date2) {
         return;
       }

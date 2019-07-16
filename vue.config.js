@@ -73,7 +73,7 @@ module.exports = {
     proxy: {
       //更多的代理控制行为
       "/api": {
-        target: "http://192.168.1.40:9000",
+        target: "http://192.168.1.32:7001",
         ws: true,
         changeOrigin: true,
         pathRewrite: {

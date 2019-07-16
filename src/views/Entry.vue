@@ -23,12 +23,9 @@ export default {
   created() {},
   beforeMount() {},
   mounted() {
-    let random = parseInt(Math.random() * 1000);
-    if (random % 2) {
-      this.bg = require("@/assets/images/bg2.jpg");
-    } else {
-      this.bg = require("@/assets/images/bg3.jpg");
-    }
+    let random = parseInt(Math.random() * 5);
+    random = random === 0 ? 1 : random;
+    this.bg = require("@/assets/images/bg" + random + ".jpg");
   },
   beforeUpdate() {},
   updated() {},

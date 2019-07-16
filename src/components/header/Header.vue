@@ -6,8 +6,8 @@
         <li
           v-for="(item,index) in menuArr"
           :key="index"
-          :class="{'active':activeIndex==index}"
-          @click="goNav(index,item.url)"
+          :class="{'active':activeUrl==item.url}"
+          @click="goNav(item.url)"
         >
           <span :class="{'hot':item.hot}">{{item.name}}</span>
         </li>
@@ -21,91 +21,91 @@ export default {
   name: "headers",
   data() {
     return {
-      activeIndex: 0,
+      activeUrl: '/home/index',
       menuArr: [
         {
           name: "首页",
-          url: "",
+          url: "/home/index",
           hot: false
         },
         {
           name: "新闻",
-          url: "",
+          url: "/home/news/index",
           hot: false
         },
         {
           name: "公告",
-          url: "",
+          url: "/home/notice/index",
           hot: false
         },
         {
           name: "资源",
-          url: "",
+          url: "/home/resource/index",
           hot: false
         },
         {
           name: "BUG系统",
-          url: "",
+          url: "/home/bug/index",
           hot: false
         },
         {
           name: "API文档",
-          url: "",
+          url: "/home/api/index",
           hot: false
         },
         {
           name: "百家言",
-          url: "",
+          url: "/home/say/index",
           hot: false
         },
         {
           name: "品书堂",
-          url: "",
+          url: "/home/book/index",
           hot: false
         },
         {
           name: "电影迷",
-          url: "",
+          url: "/home/film/index",
           hot: false
         },
         {
           name: "运动魔",
-          url: "",
+          url: "/home/sport/index",
           hot: false
         },
         {
           name: "游戏党",
-          url: "",
+          url: "/home/game/index",
           hot: true
         },
         {
           name: "技术狂",
-          url: "",
+          url: "/home/technology/index",
           hot: false
         },
         {
           name: "线下活动",
-          url: "",
+          url: "/home/activity/index",
           hot: false
         },
         {
           name: "今日食堂",
-          url: "",
+          url: "/home/rice/index",
           hot: false
         },
         {
           name: "考勤",
-          url: "",
+          url: "/home/attendance/index",
           hot: false
         },
         {
           name: "会议室",
-          url: "",
+          url: "/home/meet/index",
           hot: false
         },
         {
           name: "组织架构",
-          url: "",
+          url: "/home/organization/index",
           hot: false
         }
       ]
@@ -114,14 +114,17 @@ export default {
   props: [],
   components: {},
   methods: {
-    goNav(index, url) {
-      this.activeIndex = index;
+    goNav(url) {
+      this.activeUrl = url;
+      this.$router.push({path:url});
     }
   },
   computed: {},
   beforeCreate() {},
   created() {},
-  beforeMount() {},
+  beforeMount() {
+    this.activeUrl = this.$route.path; 
+  },
   mounted() {},
   beforeUpdate() {},
   updated() {},
